@@ -1,49 +1,60 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
-// TypeScript interface — defines the shape of a Car object
 interface Car {
   id: number;
   brand: string;
   model: string;
-  year: number;
-}
-
-// Typed props — TypeScript knows exactly what this component expects
-interface HelloProps {
-  name: string;
-  age: number;
-}
-
-function Hello({ name, age }: HelloProps) {
-  return <p>Hello {name}, you are {age} years old!</p>;
+  color: string;
+  registrationNumber: string;
+  modelYear: number;
+  price: number;
 }
 
 function App() {
-  // TypeScript knows cars is an array of Car objects
-  const [cars, setCars] = useState<Car[]>([
-    { id: 1, brand: 'Ford',   model: 'Mustang', year: 2023 },
-    { id: 2, brand: 'Toyota', model: 'Prius',   year: 2022 },
-    { id: 3, brand: 'Tesla',  model: 'Model S', year: 2024 },
-  ]);
+  const [cars, setCars] = useState<Car[]>([]);
+
+  useEffect(() => {
+    // Step 1: Login and get JWT token
+    fetch('http://localhost:8081/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'user', password: 'user' })
+    })
+    .then(response => {
+      // Step 2: Extract token from Authorization header
+      const token = response.headers.get('Authorization');
+      console.log('Token received:', token);
+      return token;
+    })
+    .then(token => {
+      // Step 3: Fetch cars using the token
+      return fetch('http://localhost:8081/api/cars', {
+        headers: { 'Authorization': token ?? '' }
+      });
+    })
+    .then(response => response.json())
+    .then(data => setCars(data._embedded.cars))
+    .catch(err => console.error('Error:', err));
+  }, []);
 
   return (
     <>
-      <Hello name="John" age={25} />
-      <h2>Cars</h2>
+      <h2>Cars from Spring Boot API</h2>
       <table border={1}>
         <thead>
           <tr>
-            <th>Brand</th>
-            <th>Model</th>
-            <th>Year</th>
+            <th>Brand</th><th>Model</th>
+            <th>Color</th><th>Year</th><th>Price</th>
           </tr>
         </thead>
         <tbody>
-          {cars.map((car: Car) => (
-            <tr key={car.id}>
+          {cars.map((car, index) => (
+            <tr key={index}>
               <td>{car.brand}</td>
               <td>{car.model}</td>
-              <td>{car.year}</td>
+              <td>{car.color}</td>
+              <td>{car.modelYear}</td>
+              <td>{car.price}</td>
             </tr>
           ))}
         </tbody>
